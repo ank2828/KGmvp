@@ -10,38 +10,28 @@ export default function SettingsPage() {
   const [gmailSyncing, setGmailSyncing] = useState(false);
   const [hubspotSyncing, setHubspotSyncing] = useState(false);
 
-  // Fetch sync status
   const { data: syncStatus, refetch } = useQuery<{ data: SyncStatus }>({
     queryKey: ['sync-status'],
     queryFn: () => api.sync.getStatus(),
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 5000,
   });
 
   const handleConnectGmail = async () => {
     try {
-      // PROVEN PATTERN: Use connectLinkUrl from backend
       const { data } = await api.auth.getConnectToken();
-
-      // Add app parameter to URL
       const connectUrl = new URL(data.connectLinkUrl);
       connectUrl.searchParams.set('app', 'gmail');
 
-      // Open OAuth popup
       const popup = window.open(
         connectUrl.toString(),
         'pipedream-oauth',
         'width=600,height=700'
       );
 
-      // Poll for OAuth completion
       const checkInterval = setInterval(async () => {
         if (popup?.closed) {
           clearInterval(checkInterval);
-
-          // Check if account was connected
           refetch();
-
-          // Wait a moment for status to update
           setTimeout(() => {
             if (syncStatus?.data?.gmail?.connected) {
               alert('✅ Gmail connected!');
@@ -50,38 +40,28 @@ export default function SettingsPage() {
           }, 1000);
         }
       }, 500);
-
     } catch (error) {
       console.error('Failed to connect Gmail:', error);
-      alert('❌ Failed to connect Gmail. Check console for details.');
+      alert('❌ Failed to connect Gmail.');
     }
   };
 
   const handleConnectHubSpot = async () => {
     try {
-      // PROVEN PATTERN: Use connectLinkUrl from backend
       const { data } = await api.auth.getConnectToken();
-
-      // Add app parameter to URL
       const connectUrl = new URL(data.connectLinkUrl);
       connectUrl.searchParams.set('app', 'hubspot');
 
-      // Open OAuth popup
       const popup = window.open(
         connectUrl.toString(),
         'pipedream-oauth',
         'width=600,height=700'
       );
 
-      // Poll for OAuth completion
       const checkInterval = setInterval(async () => {
         if (popup?.closed) {
           clearInterval(checkInterval);
-
-          // Check if account was connected
           refetch();
-
-          // Wait a moment for status to update
           setTimeout(() => {
             if (syncStatus?.data?.hubspot?.connected) {
               alert('✅ HubSpot connected!');
@@ -90,10 +70,9 @@ export default function SettingsPage() {
           }, 1000);
         }
       }, 500);
-
     } catch (error) {
       console.error('Failed to connect HubSpot:', error);
-      alert('❌ Failed to connect HubSpot. Check console for details.');
+      alert('❌ Failed to connect HubSpot.');
     }
   };
 
@@ -130,7 +109,6 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b px-6 py-4 flex justify-between items-center">
         <h1 className="text-xl font-bold text-gray-800">Settings</h1>
         <Link
@@ -141,7 +119,6 @@ export default function SettingsPage() {
         </Link>
       </header>
 
-      {/* Content */}
       <div className="p-8 max-w-4xl mx-auto">
         <h2 className="text-3xl font-bold mb-2">Integrations</h2>
         <p className="text-gray-600 mb-8">
@@ -149,7 +126,6 @@ export default function SettingsPage() {
         </p>
 
         <div className="space-y-6">
-          {/* Gmail Card */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -161,11 +137,6 @@ export default function SettingsPage() {
                   <p className="text-sm text-gray-600">
                     Sync your emails to the knowledge graph
                   </p>
-                  {gmailConnected && syncStatus?.data?.gmail?.last_sync && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Last synced: {new Date(syncStatus.data.gmail.last_sync).toLocaleString()}
-                    </p>
-                  )}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -194,7 +165,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* HubSpot Card */}
           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -206,12 +176,6 @@ export default function SettingsPage() {
                   <p className="text-sm text-gray-600">
                     Sync contacts, deals, and companies
                   </p>
-                  {hubspotConnected && syncStatus?.data?.hubspot?.last_sync && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Last synced:{' '}
-                      {new Date(syncStatus.data.hubspot.last_sync).toLocaleString()}
-                    </p>
-                  )}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -239,17 +203,6 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Info Box */}
-        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="font-semibold text-blue-900 mb-2">How it works</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>1. Click "Connect" to authorize access via OAuth</li>
-            <li>2. Click "Sync Now" to fetch data from the last 3 months</li>
-            <li>3. Data is processed into episodes and stored in the knowledge graph</li>
-            <li>4. Ask questions in the chat interface!</li>
-          </ul>
         </div>
       </div>
     </div>

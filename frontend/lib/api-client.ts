@@ -1,11 +1,10 @@
 import axios from 'axios';
 
-// API URL - defaults to localhost for development
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const apiClient = axios.create({
   baseURL: API_URL,
-  timeout: 30000, // 30 second timeout
+  timeout: 30000,
 });
 
 export const api = {
