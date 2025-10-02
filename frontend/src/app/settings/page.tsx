@@ -18,13 +18,61 @@ export default function SettingsPage() {
   });
 
   const handleConnectGmail = async () => {
-    alert('Gmail connection will be configured via Pipedream workflows. Coming soon!');
-    // TODO: Implement Pipedream workflow integration
+    try {
+      // Step 1: Get Pipedream Connect token from backend
+      const { data } = await api.auth.getConnectToken();
+
+      // Step 2: Initialize Pipedream SDK
+      const { default: Pipedream } = await import('@pipedream/sdk');
+      const pd = new Pipedream({
+        connectToken: data.token,
+      });
+
+      // Step 3: Open OAuth modal for Gmail
+      const account = await pd.connectAccount('gmail');
+
+      // Step 4: Save connected account to backend
+      await api.integrations.saveGmailAccount(account.id);
+
+      // Refresh status
+      refetch();
+
+      // Auto-trigger initial sync
+      handleSyncGmail();
+
+    } catch (error) {
+      console.error('Failed to connect Gmail:', error);
+      alert('Failed to connect Gmail. Check console for details.');
+    }
   };
 
   const handleConnectHubSpot = async () => {
-    alert('HubSpot connection will be configured via Pipedream workflows. Coming soon!');
-    // TODO: Implement Pipedream workflow integration
+    try {
+      // Step 1: Get Pipedream Connect token from backend
+      const { data } = await api.auth.getConnectToken();
+
+      // Step 2: Initialize Pipedream SDK
+      const { default: Pipedream } = await import('@pipedream/sdk');
+      const pd = new Pipedream({
+        connectToken: data.token,
+      });
+
+      // Step 3: Open OAuth modal for HubSpot
+      const account = await pd.connectAccount('hubspot');
+
+      // Step 4: Save connected account to backend
+      await api.integrations.saveHubSpotAccount(account.id);
+
+      // Refresh status
+      refetch();
+
+      // Auto-trigger initial sync
+      handleSyncHubSpot();
+
+    } catch (error) {
+      console.error('Failed to connect HubSpot:', error);
+      alert('Failed to connect HubSpot. Check console for details.');
+    }
   };
 
   const handleSyncGmail = async () => {

@@ -65,6 +65,11 @@ class ChatResponse(BaseModel):
     sources: list[str]
 
 
+class IngestRequest(BaseModel):
+    data: dict
+    source: str  # "gmail", "hubspot", etc.
+
+
 # Helper functions
 def load_accounts() -> dict:
     """Load connected accounts from JSON file"""
@@ -232,6 +237,75 @@ async def chat(request: ChatRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
+
+
+@app.post("/api/v1/ingest")
+async def ingest_data(request: IngestRequest):
+    """
+    MAIN INGESTION ENDPOINT
+    Receive data from Pipedream workflows and process into knowledge graph
+    """
+    try:
+        data = request.data
+        source = request.source
+
+        # Transform data based on source
+        if source == "gmail":
+            # Gmail email data
+            episode_content = f"""From: {data.get('from', 'Unknown')}
+To: {data.get('to', 'Unknown')}
+Subject: {data.get('subject', 'No Subject')}
+Date: {data.get('date', '')}
+
+{data.get('body', '')}"""
+
+            await graphiti_service.add_episode(
+                content=episode_content,
+                source=f"Gmail - {data.get('subject', 'Email')}",
+                name=f"email_{data.get('id', 'unknown')}",
+                reference_time=datetime.fromisoformat(data.get('date', datetime.now().isoformat())),
+                uuid=f"gmail_{data.get('id', 'unknown')}"
+            )
+
+        elif source == "hubspot_contact":
+            # HubSpot contact data
+            props = data.get('properties', {})
+            episode_content = f"""Contact Information:
+Name: {props.get('firstname', '')} {props.get('lastname', '')}
+Email: {props.get('email', 'N/A')}
+Company: {props.get('company', 'N/A')}
+Phone: {props.get('phone', 'N/A')}
+Job Title: {props.get('jobtitle', 'N/A')}"""
+
+            await graphiti_service.add_episode(
+                content=episode_content,
+                source=f"HubSpot Contact - {props.get('email', data.get('id'))}",
+                name=f"contact_{data.get('id')}",
+                reference_time=datetime.now(),
+                uuid=f"hubspot_contact_{data.get('id')}"
+            )
+
+        elif source == "hubspot_deal":
+            # HubSpot deal data
+            props = data.get('properties', {})
+            episode_content = f"""Deal Information:
+Deal Name: {props.get('dealname', 'Untitled')}
+Amount: ${props.get('amount', '0')}
+Stage: {props.get('dealstage', 'N/A')}
+Close Date: {props.get('closedate', 'N/A')}"""
+
+            await graphiti_service.add_episode(
+                content=episode_content,
+                source=f"HubSpot Deal - {props.get('dealname', data.get('id'))}",
+                name=f"deal_{data.get('id')}",
+                reference_time=datetime.now(),
+                uuid=f"hubspot_deal_{data.get('id')}"
+            )
+
+        return {"status": "success", "message": f"Processed {source} data"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
 
 
 if __name__ == "__main__":
