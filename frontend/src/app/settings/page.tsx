@@ -1,14 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { SyncStatus } from '@/types/api';
 import Link from 'next/link';
-
-// Import Pipedream Connect SDK
-// Note: This assumes @pipedream/sdk is installed
-declare const connectAccount: any;
 
 export default function SettingsPage() {
   const [gmailSyncing, setGmailSyncing] = useState(false);
@@ -22,59 +18,13 @@ export default function SettingsPage() {
   });
 
   const handleConnectGmail = async () => {
-    try {
-      // Get connect token from backend
-      const { data } = await api.auth.getConnectToken();
-
-      // Dynamically import Pipedream SDK
-      const { connectAccount } = await import('@pipedream/sdk/browser');
-
-      // Open Pipedream OAuth
-      const result = await connectAccount({
-        app: 'gmail',
-        token: data.token,
-      });
-
-      // Save account ID to backend
-      await api.integrations.saveGmailAccount(result.id);
-
-      // Refresh status
-      refetch();
-
-      // Auto-trigger initial sync
-      handleSyncGmail();
-    } catch (error) {
-      console.error('Failed to connect Gmail:', error);
-      alert('Failed to connect Gmail. Check console for details.');
-    }
+    alert('Gmail connection will be configured via Pipedream workflows. Coming soon!');
+    // TODO: Implement Pipedream workflow integration
   };
 
   const handleConnectHubSpot = async () => {
-    try {
-      // Get connect token from backend
-      const { data } = await api.auth.getConnectToken();
-
-      // Dynamically import Pipedream SDK
-      const { connectAccount } = await import('@pipedream/sdk/browser');
-
-      // Open Pipedream OAuth
-      const result = await connectAccount({
-        app: 'hubspot',
-        token: data.token,
-      });
-
-      // Save account ID to backend
-      await api.integrations.saveHubSpotAccount(result.id);
-
-      // Refresh status
-      refetch();
-
-      // Auto-trigger initial sync
-      handleSyncHubSpot();
-    } catch (error) {
-      console.error('Failed to connect HubSpot:', error);
-      alert('Failed to connect HubSpot. Check console for details.');
-    }
+    alert('HubSpot connection will be configured via Pipedream workflows. Coming soon!');
+    // TODO: Implement Pipedream workflow integration
   };
 
   const handleSyncGmail = async () => {
