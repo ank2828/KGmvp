@@ -36,7 +36,7 @@ export default function ChatPage() {
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-800">AI Agent</h1>
+        <h1 className="text-xl font-bold text-gray-800">AI Knowledge Agent</h1>
         <Link
           href="/settings"
           className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition"

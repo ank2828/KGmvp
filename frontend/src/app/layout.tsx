@@ -6,7 +6,7 @@ import Providers from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'AI Agent MVP',
+  title: 'AI Knowledge Agent',
   description: 'Gmail + HubSpot Knowledge Graph AI Agent',
 }
 
