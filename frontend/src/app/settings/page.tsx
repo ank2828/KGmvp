@@ -22,9 +22,11 @@ export default function SettingsPage() {
       // Step 1: Get Pipedream Connect token from backend
       const { data } = await api.auth.getConnectToken();
 
-      // Step 2: Initialize Pipedream SDK
-      const { default: Pipedream } = await import('@pipedream/sdk');
-      const pd = new Pipedream({
+      // Step 2: Initialize Pipedream SDK (with TS workaround)
+      const sdk = await import('@pipedream/sdk');
+      const PipedreamClass = (sdk as any).default || (sdk as any).Pipedream || sdk;
+
+      const pd = new PipedreamClass({
         connectToken: data.token,
       });
 
@@ -37,12 +39,14 @@ export default function SettingsPage() {
       // Refresh status
       refetch();
 
+      alert('✅ Gmail connected!');
+
       // Auto-trigger initial sync
       handleSyncGmail();
 
     } catch (error) {
       console.error('Failed to connect Gmail:', error);
-      alert('Failed to connect Gmail. Check console for details.');
+      alert('❌ Failed to connect Gmail. Check console for details.');
     }
   };
 
@@ -51,9 +55,11 @@ export default function SettingsPage() {
       // Step 1: Get Pipedream Connect token from backend
       const { data } = await api.auth.getConnectToken();
 
-      // Step 2: Initialize Pipedream SDK
-      const { default: Pipedream } = await import('@pipedream/sdk');
-      const pd = new Pipedream({
+      // Step 2: Initialize Pipedream SDK (with TS workaround)
+      const sdk = await import('@pipedream/sdk');
+      const PipedreamClass = (sdk as any).default || (sdk as any).Pipedream || sdk;
+
+      const pd = new PipedreamClass({
         connectToken: data.token,
       });
 
@@ -66,12 +72,14 @@ export default function SettingsPage() {
       // Refresh status
       refetch();
 
+      alert('✅ HubSpot connected!');
+
       // Auto-trigger initial sync
       handleSyncHubSpot();
 
     } catch (error) {
       console.error('Failed to connect HubSpot:', error);
-      alert('Failed to connect HubSpot. Check console for details.');
+      alert('❌ Failed to connect HubSpot. Check console for details.');
     }
   };
 
