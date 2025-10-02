@@ -82,9 +82,10 @@ export default function SettingsPage() {
       const response = await api.sync.syncGmail();
       alert(`✓ Gmail synced! ${response.data.synced} emails processed.`);
       refetch();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Sync failed:', error);
-      alert(`Sync failed: ${error.response?.data?.detail || error.message}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Sync failed: ${message}`);
     } finally {
       setGmailSyncing(false);
     }
@@ -96,9 +97,10 @@ export default function SettingsPage() {
       const response = await api.sync.syncHubSpot();
       alert(`✓ HubSpot synced! ${response.data.synced} items processed.`);
       refetch();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Sync failed:', error);
-      alert(`Sync failed: ${error.response?.data?.detail || error.message}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Sync failed: ${message}`);
     } finally {
       setHubspotSyncing(false);
     }
