@@ -50,7 +50,7 @@ export default function ChatPage() {
         {messages.length === 0 && (
           <div className="text-center text-gray-500 mt-20">
             <h2 className="text-2xl font-semibold mb-2">Ask me anything</h2>
-            <p className="text-sm">I have access to your Gmail and HubSpot data</p>
+            <p className="text-sm">I have access to your Gmail and HubSpot data.</p>
             <div className="mt-6 text-xs text-gray-400">
               <p>Try asking:</p>
               <ul className="mt-2 space-y-1">
