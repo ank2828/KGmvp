@@ -19,30 +19,37 @@ export default function SettingsPage() {
 
   const handleConnectGmail = async () => {
     try {
-      // Step 1: Get Pipedream Connect token from backend
+      // PROVEN PATTERN: Use connectLinkUrl from backend
       const { data } = await api.auth.getConnectToken();
 
-      // Step 2: Initialize Pipedream SDK (with TS workaround)
-      const sdk = await import('@pipedream/sdk');
-      const PipedreamClass = (sdk as any).default || (sdk as any).Pipedream || sdk;
+      // Add app parameter to URL
+      const connectUrl = new URL(data.connectLinkUrl);
+      connectUrl.searchParams.set('app', 'gmail');
 
-      const pd = new PipedreamClass({
-        connectToken: data.token,
-      });
+      // Open OAuth popup
+      const popup = window.open(
+        connectUrl.toString(),
+        'pipedream-oauth',
+        'width=600,height=700'
+      );
 
-      // Step 3: Open OAuth modal for Gmail
-      const account = await pd.connectAccount('gmail');
+      // Poll for OAuth completion
+      const checkInterval = setInterval(async () => {
+        if (popup?.closed) {
+          clearInterval(checkInterval);
 
-      // Step 4: Save connected account to backend
-      await api.integrations.saveGmailAccount(account.id);
+          // Check if account was connected
+          refetch();
 
-      // Refresh status
-      refetch();
-
-      alert('✅ Gmail connected!');
-
-      // Auto-trigger initial sync
-      handleSyncGmail();
+          // Wait a moment for status to update
+          setTimeout(() => {
+            if (syncStatus?.data?.gmail?.connected) {
+              alert('✅ Gmail connected!');
+              handleSyncGmail();
+            }
+          }, 1000);
+        }
+      }, 500);
 
     } catch (error) {
       console.error('Failed to connect Gmail:', error);
@@ -52,30 +59,37 @@ export default function SettingsPage() {
 
   const handleConnectHubSpot = async () => {
     try {
-      // Step 1: Get Pipedream Connect token from backend
+      // PROVEN PATTERN: Use connectLinkUrl from backend
       const { data } = await api.auth.getConnectToken();
 
-      // Step 2: Initialize Pipedream SDK (with TS workaround)
-      const sdk = await import('@pipedream/sdk');
-      const PipedreamClass = (sdk as any).default || (sdk as any).Pipedream || sdk;
+      // Add app parameter to URL
+      const connectUrl = new URL(data.connectLinkUrl);
+      connectUrl.searchParams.set('app', 'hubspot');
 
-      const pd = new PipedreamClass({
-        connectToken: data.token,
-      });
+      // Open OAuth popup
+      const popup = window.open(
+        connectUrl.toString(),
+        'pipedream-oauth',
+        'width=600,height=700'
+      );
 
-      // Step 3: Open OAuth modal for HubSpot
-      const account = await pd.connectAccount('hubspot');
+      // Poll for OAuth completion
+      const checkInterval = setInterval(async () => {
+        if (popup?.closed) {
+          clearInterval(checkInterval);
 
-      // Step 4: Save connected account to backend
-      await api.integrations.saveHubSpotAccount(account.id);
+          // Check if account was connected
+          refetch();
 
-      // Refresh status
-      refetch();
-
-      alert('✅ HubSpot connected!');
-
-      // Auto-trigger initial sync
-      handleSyncHubSpot();
+          // Wait a moment for status to update
+          setTimeout(() => {
+            if (syncStatus?.data?.hubspot?.connected) {
+              alert('✅ HubSpot connected!');
+              handleSyncHubSpot();
+            }
+          }, 1000);
+        }
+      }, 500);
 
     } catch (error) {
       console.error('Failed to connect HubSpot:', error);

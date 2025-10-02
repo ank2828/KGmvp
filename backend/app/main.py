@@ -36,6 +36,7 @@ STORAGE_PATH = Path(__file__).parent / "storage" / "connected_accounts.json"
 # Pydantic models
 class ConnectTokenResponse(BaseModel):
     token: str
+    connectLinkUrl: str  # PROVEN PATTERN: Return ready-to-use URL
 
 
 class SaveAccountRequest(BaseModel):
@@ -117,13 +118,45 @@ async def root():
 @app.post("/api/v1/auth/connect-token", response_model=ConnectTokenResponse)
 async def create_connect_token():
     """
-    Generate a Pipedream Connect token for OAuth flow
+    Generate a Pipedream Connect token and URL for OAuth flow
+    PROVEN PATTERN: Returns connectLinkUrl ready for popup
     """
     try:
-        token = await pipedream_client.create_connect_token()
-        return ConnectTokenResponse(token=token)
+        result = await pipedream_client.create_connect_token()
+        return ConnectTokenResponse(
+            token=result["token"],
+            connectLinkUrl=result["connectLinkUrl"]
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create connect token: {str(e)}")
+
+
+@app.get("/api/v1/integrations/accounts")
+async def list_connected_accounts():
+    """
+    PROVEN PATTERN: Check what apps user has connected
+    Returns list of connected accounts from Pipedream
+    """
+    try:
+        accounts_list = await pipedream_client.list_accounts("user_main")
+
+        # Auto-save any new accounts we find
+        local_accounts = load_accounts()
+
+        for account in accounts_list:
+            app_slug = account.get("app", {}).get("name_slug")
+            account_id = account.get("id")
+
+            if app_slug == "gmail" and not local_accounts.get("gmail_account_id"):
+                local_accounts["gmail_account_id"] = account_id
+                save_accounts(local_accounts)
+            elif app_slug == "hubspot" and not local_accounts.get("hubspot_account_id"):
+                local_accounts["hubspot_account_id"] = account_id
+                save_accounts(local_accounts)
+
+        return {"accounts": accounts_list}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list accounts: {str(e)}")
 
 
 @app.post("/api/v1/integrations/gmail/save", response_model=SaveAccountResponse)
@@ -209,19 +242,55 @@ async def sync_hubspot():
 async def get_sync_status():
     """
     Get connection and sync status for all integrations
+    PROVEN PATTERN: Check Pipedream for connected accounts
     """
-    accounts = load_accounts()
+    try:
+        # Check Pipedream for connected accounts
+        accounts_list = await pipedream_client.list_accounts("user_main")
 
-    return SyncStatusResponse(
-        gmail={
-            "connected": accounts.get("gmail_account_id") is not None,
-            "last_sync": accounts.get("last_sync", {}).get("gmail")
-        },
-        hubspot={
-            "connected": accounts.get("hubspot_account_id") is not None,
-            "last_sync": accounts.get("last_sync", {}).get("hubspot")
-        }
-    )
+        # Auto-save any new accounts we find
+        local_accounts = load_accounts()
+        gmail_connected = False
+        hubspot_connected = False
+
+        for account in accounts_list:
+            app_slug = account.get("app", {}).get("name_slug")
+            account_id = account.get("id")
+
+            if app_slug == "gmail":
+                gmail_connected = True
+                if not local_accounts.get("gmail_account_id"):
+                    local_accounts["gmail_account_id"] = account_id
+                    save_accounts(local_accounts)
+            elif app_slug == "hubspot":
+                hubspot_connected = True
+                if not local_accounts.get("hubspot_account_id"):
+                    local_accounts["hubspot_account_id"] = account_id
+                    save_accounts(local_accounts)
+
+        return SyncStatusResponse(
+            gmail={
+                "connected": gmail_connected,
+                "last_sync": local_accounts.get("last_sync", {}).get("gmail")
+            },
+            hubspot={
+                "connected": hubspot_connected,
+                "last_sync": local_accounts.get("last_sync", {}).get("hubspot")
+            }
+        )
+    except Exception as e:
+        # Fallback to local storage if Pipedream check fails
+        accounts = load_accounts()
+        return SyncStatusResponse(
+            gmail={
+                "connected": accounts.get("gmail_account_id") is not None,
+                "last_sync": accounts.get("last_sync", {}).get("gmail")
+            },
+            hubspot={
+                "connected": accounts.get("hubspot_account_id") is not None,
+                "last_sync": accounts.get("last_sync", {}).get("hubspot")
+            }
+        )
 
 
 @app.post("/api/v1/agent/chat", response_model=ChatResponse)
